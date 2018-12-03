@@ -55,5 +55,28 @@ Future<void> main() async {
   });
 
   print('Count: ${count}'); // 104126
+
+
+  for ( var key in rects.keys ) {
+    Rectangle r = rects[key];
+    bool success = true;
+    for ( var x = r.left; x < r.left + r.width; x++ ) {
+      for ( var y = r.top; y < r.top + r.height; y++ ) {
+        // check each square on the cloth.. if they're all 1s, you're good.
+        if (cloth[x][y] != 1) {
+          success = false;
+          break;
+        } 
+      }
+      if ( !success ) {
+        break;
+      }
+    }
+
+    if ( success ) {
+      print('Rectangle ${key} is ok.');
+      break;
+    }
+  };
 }
 
