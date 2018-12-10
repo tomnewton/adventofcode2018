@@ -65,13 +65,12 @@ Future<void> main() async {
 
   // Part 2.
   print(r);
-
 }
-
 
 class Result {
   final String char;
   final int length;
+  
   Result(this.char, this.length);
 
   String toString() {
