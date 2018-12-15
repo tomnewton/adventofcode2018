@@ -21,7 +21,7 @@ class GridIterator extends Iterator<GridPoint> {
 
   @override
   get current {
-    if (x == null || y == null ) {
+    if (x == null || y == null) {
       return null;
     }
 
@@ -30,22 +30,22 @@ class GridIterator extends Iterator<GridPoint> {
 
   @override
   bool moveNext() {
-    if ( this.x == null && this.y == null ) {
+    if (this.x == null && this.y == null) {
       this.x = 0;
       this.y = 0;
       return true;
     }
 
-    if ( this.x < this.data._grid.length-1 ) {
+    if (this.x < this.data._grid.length - 1) {
       this.x += 1;
       return true;
-    } 
-    
+    }
+
     // at the end of a row...
     this.x = 0;
     this.y += 1;
 
-    if ( this.y >= this.data._grid[0].length ) {
+    if (this.y >= this.data._grid[0].length) {
       this.x = null;
       this.y = null;
       return false;
@@ -55,47 +55,86 @@ class GridIterator extends Iterator<GridPoint> {
   }
 }
 
+// the input coordinates ( problem dataset )
+class InputCoordinate extends Point<int> {
+  final int index; // position in the input.
+  bool isInfinite = false;
+  int area = 0;
+
+  InputCoordinate(int x, int y, this.index) : super(x, y);
+
+  @override
+  int get hashCode =>
+      this.index ^ this.x.hashCode ^ this.y.hashCode ^ this.isInfinite.hashCode;
+}
+
 // A point on our grid.
-class GridPoint {
-  Point p;
-  int value;
+class GridPoint extends Point<int> {
+  InputCoordinate
+      _closestCoordinate; // the input coordinate, closest to this point
+  bool isEquidistant = false;
+
   int totalDistance = 0; // for part 2.
 
-  GridPoint(this.p, [this.value = Grid.EQUIDISTANT]);
+  GridPoint(int x, int y) : super(x, y);
 
-  get x => p.x;
-  get y => p.y;
+  InputCoordinate get closestCoordinate => _closestCoordinate;
+
+  set closestCoordinate(InputCoordinate ic) {
+    _closestCoordinate = ic;
+  }
+
+  int get distanceToClosestCoordinate => _closestCoordinate == null
+      ? double.maxFinite.toInt()
+      : this.manhattanDistanceTo(_closestCoordinate);
 
   String toString() {
-    return "${this.p}: ${this.value}";
+    return "${this.x}, ${this.y}: ${this.closestCoordinate}";
   }
+
+  int manhattanDistanceTo(Point ic) {
+    return md(this, ic);
+  }
+
+  @override
+  int get hashCode =>
+      this.x.hashCode ^ this.y.hashCode ^ _closestCoordinate.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GridPoint &&
+          y == other.y &&
+          x == other.x &&
+          _closestCoordinate == other.closestCoordinate;
 }
 
 // Grid
-class Grid extends Object with IterableMixin<GridPoint>{
+class Grid extends Object with IterableMixin<GridPoint> {
   static const int EQUIDISTANT = -1;
-  
+
   final int width;
   final int height;
   List<List<GridPoint>> _grid;
 
   Iterator<GridPoint> _iterator;
 
-  Grid(this.width, this.height) {  // [x][y]
+  Grid(this.width, this.height) {
+    // [x][y]
     _grid = new List();
-    
+
     for (var i = 0; i < this.width; i++) {
       List<GridPoint> column = new List<GridPoint>(this.height);
-      for ( var j = 0; j < this.height; j++ ) {
-        column[j] = new GridPoint(new Point(i, j));
+      for (var j = 0; j < this.height; j++) {
+        column[j] = new GridPoint(i, j);
       }
       _grid.add(column);
     }
-    
+
     _iterator = new GridIterator(this);
   }
 
-  GridPoint tile (int x, int y) {
+  GridPoint tile(int x, int y) {
     return _grid[x][y];
   }
 
@@ -105,52 +144,79 @@ class Grid extends Object with IterableMixin<GridPoint>{
   Future<List<int>> getInifinites() async {
     List<int> vals = new List();
 
-    for (var i = 0; i < _grid.length; i++ ) {
-      vals.add(_grid[0][i].value);
-      vals.add(_grid[this.height-1][i].value);
+    for (var i = 0; i < _grid.length; i++) {
+      vals.add(_grid[0][i].closestCoordinate.index);
+      vals.add(_grid[this.height - 1][i].closestCoordinate.index);
     }
 
-    for ( var i = 1; i < _grid.length-2; i++ ) {
-      vals.add(_grid[i][0].value);
-      vals.add(_grid[i][_grid[i].length-1].value);
+    for (var i = 1; i < _grid.length - 2; i++) {
+      vals.add(_grid[i][0].closestCoordinate.index);
+      vals.add(_grid[i][_grid[i].length - 1].closestCoordinate.index);
     }
 
     return await Observable.fromIterable(vals)
-      .where((int i) 
-        => i != Grid.EQUIDISTANT)
-      .distinctUnique()
-      .toList();
+        .where((int i) => i != Grid.EQUIDISTANT)
+        .distinctUnique()
+        .toList();
   }
 
-  /** 
-  String toString() {
-    String output = "";
-    for ( var x = 0; x < _grid.length; x ++) {
-      String row = "";
-      for ( var y = 0; y < _grid[x].length; y++ ) {
-        if ( _grid[y][x].value != Grid.EQUIDISTANT ) {
-          row += _grid[y][x].value.toString() + ",";
-        } else {
-          row += ".,";
-        } 
-      }
-      output += row+"\n";
-    }
-    return output;
-  }*/
+  bool pointOnEdge(GridPoint p) =>
+      p.x == this.width - 1 || p.y == this.height - 1 || p.x == 0 || p.y == 0
+          ? true
+          : false;
 }
 
-// Basic vo to keep track as we scan the grid.
-class ScanVO extends Object {
-  Point p;
-  int distance;
-  int index;
-  bool duplicate;
+Future<int> solvePart1(Grid grid, List<InputCoordinate> points) async {
+  await Observable.fromIterable(grid)
+      .flatMap((GridPoint gp) =>
+              Observable.fromIterable(points).map((InputCoordinate ic) {
+                int distance = md(gp, ic);
+                if (gp.distanceToClosestCoordinate == distance) {
+                  gp.isEquidistant = true;
+                } else if (gp.distanceToClosestCoordinate > distance) {
+                  gp.closestCoordinate = ic;
+                  gp.isEquidistant = false;
+                }
+              }) // just want one of each GridPoint.
+          )
+      .drain();
 
-  ScanVO(this.p, this.distance, this.index, [this.duplicate = false]);
+  List<int> counts = new List<int>.filled(points.length, 0);
+
+  int largestArea = await Observable.fromIterable(grid)
+      .map((GridPoint gp) {
+        if (grid.pointOnEdge(gp)) {
+          gp.closestCoordinate.isInfinite = true;
+        }
+        return gp;
+      })
+      .where((GridPoint gp) =>
+          !gp.isEquidistant && !gp.closestCoordinate.isInfinite)
+      .map((GridPoint gp) {
+        counts[gp.closestCoordinate.index]++;
+        return counts[gp.closestCoordinate.index];
+      })
+      .max((int a, int b) => a - b);
+
+  return largestArea;
 }
 
-
+// Part 2
+Future<int> solvePart2(Grid grid, List<InputCoordinate> points) async {
+  return await new Observable.fromIterable(grid)
+      .flatMap((GridPoint gp) {
+        return new Observable.fromIterable(points)
+            .map((Point p) => md(gp, p))
+            .reduce((int acc, int curr) => acc + curr)
+            .asObservable()
+            .map((int total) {
+          gp.totalDistance = total;
+          return gp;
+        });
+      })
+      .where((GridPoint gp) => gp.totalDistance < 10000)
+      .length;
+}
 
 // The solution.
 Future<void> main() async {
@@ -158,89 +224,33 @@ Future<void> main() async {
   String dir = Directory.current.absolute.path;
   String path = "${dir}/day6/input.txt";
 
-  List<Point> points = await File(path)
+  int index = -1;
+  List<InputCoordinate> points = await File(path)
       .openRead()
       .transform(Utf8Decoder())
       .transform(LineSplitter())
       .map((String line) {
-        List<String> parts = line.split(", ");
-        return new Point(int.parse(parts[0]), int.parse(parts[1]));
-      }).toList();
+    List<String> parts = line.split(", ");
+    index++;
+    return new InputCoordinate(int.parse(parts[0]), int.parse(parts[1]), index);
+  }).toList();
 
   // Work out how big the grid should be.
-  Point maxX = await Observable.fromIterable(points).max((Point a, Point b) => a.x-b.x);
-  Point maxY = await Observable.fromIterable(points).max((Point a, Point b) => a.y-b.y);
-  int size = max(maxX.x, maxY.y)+1;
+  Point maxX = await Observable.fromIterable(points)
+      .max((Point a, Point b) => a.x - b.x);
+  Point maxY = await Observable.fromIterable(points)
+      .max((Point a, Point b) => a.y - b.y);
+  int size = max(maxX.x, maxY.y) + 1;
 
+  Grid grid;
 
-  // Create the grid.
-  Grid grid = new Grid(size, size);
+  // Part1:
+  grid = new Grid(size, size);
+  int largestArea = await solvePart1(grid, points);
+  print("Part 1: ${largestArea}");
 
-  // Loop through all of the points on the grid, and work out 
-  // which of our coordinates is closest, but not a duplicate.
-  await Observable.fromIterable(grid).flatMap((GridPoint gp) 
-    => Observable.fromIterable(points).scan((ScanVO acc, Point curr, int i ) {
-      int distance = md(gp.p, curr);
-      
-      if ( acc == null ) {
-        return new ScanVO(curr, distance, i);
-      }
-      if ( acc.distance < distance ) {
-        return acc;
-      }
-      if ( acc.distance == distance ) {
-        return new ScanVO(curr, distance, i, true);
-      }
-      return new ScanVO(curr, distance, i);
-    
-    }).map((ScanVO vo) 
-      => vo.duplicate ? gp.value = Grid.EQUIDISTANT : gp.value = vo.index))
-    .drain();
-
-    /*await Observable.fromIterable(grid).withLatestFrom(
-      Observable.fromIterable(points), (GridPoint gp, Point p) 
-        => [gp, p])
-      .map((List o) => [o, md((o[0] as GridPoint).p, o[1])])
-      .map((List o) => );*/
-
-
-    //Stream<int> a = new Stream.empty();
-
-    // Empty list to track the counts...
-    List<int> counts = new List.filled(points.length, 0);
-
-    // Get areas that go to inifinity, we don't want these.
-    List<int> border = await grid.getInifinites();
-
-    // now we're going to just count the grid squares and check their values...
-    // to work out which one has the biggest area
-    for(GridPoint p in grid) {
-      if ( p.value != Grid.EQUIDISTANT && !border.contains(p.value) ) {
-        counts[p.value] += 1; // count it.
-      }
-    }
-
-    // Now scan counts for the largest area...
-    int largestArea = await Observable.fromIterable(counts).max((int a, int b) => a-b);
-
-    print("Part 1: ");
-    print(largestArea);
-
-
-    // Part 2
-    grid = new Grid(size, size);
-
-    int sizeOfArea = await new Observable.fromIterable(grid).flatMap((GridPoint gp) {
-      return new Observable.fromIterable(points)
-        .map((Point p) => md(gp.p, p))
-        .reduce((int acc, int curr) => acc + curr).asObservable()
-        .map((int total) { gp.totalDistance = total; return gp;});
-    }).where((GridPoint gp) => gp.totalDistance < 10000).length;
-
-    print(sizeOfArea);
-}
-
-class ResultVO {
-  GridPoint gp;
-  
+  // Part 2
+  grid = new Grid(size, size);
+  int sizeOfArea = await solvePart2(grid, points);
+  print("Part 2: ${sizeOfArea}");
 }
