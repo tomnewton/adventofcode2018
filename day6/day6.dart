@@ -11,7 +11,8 @@ int md(Point p1, Point p2) {
   return (p1.x - p2.x).abs() + (p1.y - p2.y).abs();
 }
 
-// Iterator for our Grid.
+// Iterator for our Grid, so that we can map over the
+// multidimentional array.
 class GridIterator extends Iterator<GridPoint> {
   int x;
   int y;
@@ -95,21 +96,12 @@ class GridPoint extends Point<int> {
   int manhattanDistanceTo(Point ic) {
     return md(this, ic);
   }
-
-  @override
-  int get hashCode =>
-      this.x.hashCode ^ this.y.hashCode ^ _closestCoordinate.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is GridPoint &&
-          y == other.y &&
-          x == other.x &&
-          _closestCoordinate == other.closestCoordinate;
 }
 
 // Grid
+// Represents our grid that contains our InputCoordinates
+// We must evaluate each point on this grid for both Part 1
+// and Part 2. This class makes this simpler.
 class Grid extends Object with IterableMixin<GridPoint> {
   static const int EQUIDISTANT = -1;
 
