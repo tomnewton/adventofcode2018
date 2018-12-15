@@ -159,6 +159,8 @@ class Grid extends Object with IterableMixin<GridPoint> {
 }
 
 Future<int> solvePart1(Grid grid, List<InputCoordinate> points) async {
+  // For each point on the grid, map over the input coordinates
+  // and find the closest input coordinate to the grid point.
   await Observable.fromIterable(grid)
       .flatMap((GridPoint gp) =>
               Observable.fromIterable(points).map((InputCoordinate ic) {
@@ -175,6 +177,8 @@ Future<int> solvePart1(Grid grid, List<InputCoordinate> points) async {
 
   List<int> counts = new List<int>.filled(points.length, 0);
 
+  // now that the grid has been evaluated
+  // eliminate the areas that are inifinite
   int largestArea = await Observable.fromIterable(grid)
       .map((GridPoint gp) {
         if (grid.pointOnEdge(gp)) {
@@ -182,9 +186,10 @@ Future<int> solvePart1(Grid grid, List<InputCoordinate> points) async {
         }
         return gp;
       })
-      .where((GridPoint gp) =>
+      .where((GridPoint gp) => // apply our filter
           !gp.isEquidistant && !gp.closestCoordinate.isInfinite)
       .map((GridPoint gp) {
+        // count to get the size of the area
         counts[gp.closestCoordinate.index]++;
         return counts[gp.closestCoordinate.index];
       })
