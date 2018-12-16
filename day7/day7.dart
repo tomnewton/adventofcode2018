@@ -44,15 +44,11 @@ Future<void> main() async {
     }
   });
 
-  // Now for each step, we have a list of prerequisite instructions
-  // these need to be sorted alphabetically... so let's do that...
   for (String k in m.keys) {
     m[k].sort(
         (InputInstruction a, InputInstruction b) => a.step.compareTo(b.step));
   }
 
-  // Now  we just need to figure out where to start... and we should be able to follow this through
-  // One of our keys won't have a prerequisite... that is the one we want to start with....
   String result = "";
 
   while (m.length > 0) {
