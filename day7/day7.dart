@@ -19,7 +19,6 @@ Future<void> main() async {
   RegExp exp = new RegExp(" (.) .* (.) ");
 
   Map<String, List<InputInstruction>> m = new Map();
-  Map<String, InputInstruction> allInstructions = new Map();
 
   await File(path)
       .openRead()
@@ -34,13 +33,11 @@ Future<void> main() async {
     // keyed on the name of the step
     if (!m.containsKey(step)) {
       m[step] = new List();
-      allInstructions[step] = instr;
     }
     m[step].add(instr);
 
     if (!m.containsKey(prereq)) {
       m[prereq] = new List();
-      allInstructions[prereq] = new InputInstruction(prereq, null);
     }
   });
 

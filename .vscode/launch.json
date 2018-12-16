@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Dart",
-            "program": "day6/day6.dart",
+            "program": "day7/day7.dart",
             "request": "launch",
             "type": "dart"
         }
