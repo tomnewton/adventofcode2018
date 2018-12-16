@@ -56,24 +56,20 @@ Future<void> main() async {
       }
     }
 
-    if (options.length == 0) {
-      break;
-    }
-
     String next;
     if (options.length > 0) {
       options.sort();
       next = options[0];
       m.remove(next);
       result += next;
-    }
 
-    for (String key in m.keys) {
-      List<InputInstruction> prereqs = m[key];
-      for (InputInstruction ii in prereqs) {
-        if (ii.prerequisite == next) {
-          m[key].remove(ii);
-          break;
+      for (String key in m.keys) {
+        List<InputInstruction> prereqs = m[key];
+        for (InputInstruction ii in prereqs) {
+          if (ii.prerequisite == next) {
+            m[key].remove(ii);
+            break;
+          }
         }
       }
     }
