@@ -6,7 +6,7 @@ class InputInstruction {
   String step;
   String prerequisite;
 
-  InputInstruction(this.step, this.prerequisite) {}
+  InputInstruction(this.step, this.prerequisite);
 
   String toString() =>
       "Step ${this.prerequisite}  must be finished before step ${this.step} can begin.";
