@@ -31,16 +31,6 @@ const lookup = {
   "Z": 26
 };
 
-class InputInstruction {
-  String step;
-  String prerequisite;
-
-  InputInstruction(this.step, this.prerequisite);
-
-  String toString() =>
-      "Step ${this.prerequisite}  must be finished before step ${this.step} can begin.";
-}
-
 void partOne(Map<String, List<InputInstruction>> m) {
   String result = "";
 
@@ -72,7 +62,7 @@ void partOne(Map<String, List<InputInstruction>> m) {
     }
   }
 
-  print(result);
+  print("Part 1: ${result}");
 }
 
 // A worker.
@@ -187,7 +177,6 @@ List<String> getOptions(Map<String, List<InputInstruction>> m) {
 void partTwo(Map<String, List<InputInstruction>> m) {
   WorkerPool pool = new WorkerPool(5);
   int seconds = 0;
-  String result = "";
 
   // Get the current options...
   List<String> options = getOptions(m);
@@ -210,9 +199,9 @@ void partTwo(Map<String, List<InputInstruction>> m) {
     }
 
     for (String w in done) {
-      result += w;
-      adjustPrerequisites(m, w);
+      updatePrerequisites(m, w);
     }
+
     // Each time a worker is finished with a piece of work,
     // see if that created more options... if it did, push them onto the options array
     List<String> newOptions = getOptions(m);
@@ -228,7 +217,7 @@ void partTwo(Map<String, List<InputInstruction>> m) {
 // Helper function, to loop over the instruction set, and remove prerequisites
 // that are complete. if map[key].length == 0 then 'key' has no prerequisites and
 // is ready to be processed by a worker.
-void adjustPrerequisites(Map<String, List<InputInstruction>> m, String s) {
+void updatePrerequisites(Map<String, List<InputInstruction>> m, String s) {
   for (String key in m.keys) {
     List<InputInstruction> toRemove = new List();
     for (InputInstruction ii in m[key]) {
@@ -240,6 +229,17 @@ void adjustPrerequisites(Map<String, List<InputInstruction>> m, String s) {
       m[key].remove(ii);
     }
   }
+}
+
+// VO for the instructions.
+class InputInstruction {
+  String step;
+  String prerequisite;
+
+  InputInstruction(this.step, this.prerequisite);
+
+  String toString() =>
+      "Step ${this.prerequisite}  must be finished before step ${this.step} can begin.";
 }
 
 // Get the input instructions for the puzzle.
